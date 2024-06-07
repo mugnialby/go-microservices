@@ -1,0 +1,14 @@
+auth:
+  key: "TES"
+server:
+  port: ":8666"
+apps:
+  mode: "debug"
+database:
+  host: "localhost"
+  user: "postgres"
+  password: "root"
+  dbname: "users"
+  port: 5433
+  sslmode: "disable"
+  timezone: "Asia/Jakarta"

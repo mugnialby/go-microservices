@@ -1,0 +1,6 @@
+auth:
+  key: "TES"
+server:
+  port: ":8660"
+apps:
+  mode: "debug"
