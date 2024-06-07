@@ -1,7 +1,10 @@
 auth:
   key: "TES"
 server:
-  port: ":8666"
+  port: ":8661"
+services:
+  users:
+    port: ":8551"
 apps:
   mode: "debug"
 database:

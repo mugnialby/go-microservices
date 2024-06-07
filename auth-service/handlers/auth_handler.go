@@ -5,21 +5,27 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator"
 	"github.com/mugnialby/go-microservices/auth-service/models/dto/requests"
 	"github.com/mugnialby/go-microservices/auth-service/models/dto/responses"
+	proto "github.com/mugnialby/go-microservices/auth-service/proto/users"
 	"github.com/mugnialby/go-microservices/auth-service/services"
 )
 
 type AuthHandler struct {
-	authService       services.AuthService
-	validationService *validator.Validate
+	authService           services.AuthService
+	validationService     services.ValidationService
+	userClientGrpcService proto.UserServiceClient
 }
 
-func NewAuthHandler(authService services.AuthService, validationService *validator.Validate) *AuthHandler {
+func NewAuthHandler(
+	authService services.AuthService,
+	validationService services.ValidationService,
+	userClientGrpcService proto.UserServiceClient,
+) *AuthHandler {
 	return &AuthHandler{
-		authService:       authService,
-		validationService: validationService,
+		authService:           authService,
+		validationService:     validationService,
+		userClientGrpcService: userClientGrpcService,
 	}
 }
 
@@ -31,16 +37,25 @@ func (handler *AuthHandler) LoginHandler(context *gin.Context) {
 		return
 	}
 
-	// user, err := handler.authService.FindById(&id)
-	// if err != nil {
-	// 	context.JSON(http.StatusUnauthorized, responses.NewResponse("Bad Credential", nil))
-	// 	return
-	// }
+	errorValidation := handler.validationService.Validate(&loginRequest)
+	if errorValidation != nil {
+		log.Println(errorValidation.Error())
+		context.JSON(http.StatusBadRequest, responses.NewResponse("Bad Request", nil))
+		return
+	}
 
-	// if user.Password != loginRequest.Password {
-	// 	context.JSON(http.StatusUnauthorized, gin.H{"error": "invalid password"})
-	// 	return
-	// }
+	findByUsernameRequest := proto.FindByUsernameRequest{Username: loginRequest.Username}
+	user, err := handler.userClientGrpcService.FindByUsername(context, &findByUsernameRequest)
+	if err != nil {
+		log.Println(err.Error())
+		context.JSON(http.StatusUnauthorized, responses.NewResponse("Bad Credential", nil))
+		return
+	}
+
+	if user.Password != loginRequest.Password {
+		context.JSON(http.StatusUnauthorized, responses.NewResponse("Bad Credential", nil))
+		return
+	}
 
 	// token, err := middleware.GenerateJWT(*user.Email)
 	// if err != nil {
@@ -49,5 +64,5 @@ func (handler *AuthHandler) LoginHandler(context *gin.Context) {
 	// }
 
 	// context.JSON(http.StatusOK, gin.H{"token": token})
-	context.JSON(http.StatusOK, gin.H{"token": "tok"})
+	context.JSON(http.StatusOK, responses.NewResponse("token", nil))
 }

@@ -7,7 +7,9 @@
 package main
 
 import (
+	"github.com/mugnialby/go-microservices/auth-service/connections"
 	"github.com/mugnialby/go-microservices/auth-service/handlers"
+	"github.com/mugnialby/go-microservices/auth-service/proto/users"
 	"github.com/mugnialby/go-microservices/auth-service/services"
 	"github.com/mugnialby/go-microservices/auth-service/services/impl"
 )
@@ -16,7 +18,9 @@ import (
 
 func InitAuthHandler() *handlers.AuthHandler {
 	authService := ProvideAuthService()
-	authHandler := ProvideAuthHandler(authService)
+	validationService := ProvideValidationService()
+	userServiceClient := ProvideUserGrpcConnection()
+	authHandler := ProvideAuthHandler(authService, validationService, userServiceClient)
 	return authHandler
 }
 
@@ -32,6 +36,18 @@ func ProvideAuthService() services.AuthService {
 	return servicesimpl.NewAuthService()
 }
 
-func ProvideAuthHandler(authService services.AuthService) *handlers.AuthHandler {
-	return handlers.NewAuthHandler(authService)
+func ProvideValidationService() services.ValidationService {
+	return servicesimpl.NewValidationService()
+}
+
+func ProvideUserGrpcConnection() users.UserServiceClient {
+	return connections.NewUserConnection()
+}
+
+func ProvideAuthHandler(
+	authService services.AuthService,
+	validationService services.ValidationService,
+	userServiceClient users.UserServiceClient,
+) *handlers.AuthHandler {
+	return handlers.NewAuthHandler(authService, validationService, userServiceClient)
 }

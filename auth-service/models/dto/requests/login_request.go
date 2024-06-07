@@ -7,6 +7,6 @@ package requests
  * login request type
  */
 type LoginRequest struct {
-	Username string `json:"username" validate:"required,min=8,max=64 "`
-	Password string `json:"password" validate:"required,max=256 "`
+	Username string `json:"username" validate:"required,min=3,max=64"`
+	Password string `json:"password" validate:"required,min=8,max=256"`
 }

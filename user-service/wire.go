@@ -6,7 +6,7 @@ package main
 import (
 	"github.com/google/wire"
 	"github.com/mugnialby/go-microservices/user-service/handlers"
-	proto "github.com/mugnialby/go-microservices/user-service/proto/user"
+	proto "github.com/mugnialby/go-microservices/user-service/proto/users"
 	"github.com/mugnialby/go-microservices/user-service/repositories"
 	repositoriesimpl "github.com/mugnialby/go-microservices/user-service/repositories/impl"
 	"github.com/mugnialby/go-microservices/user-service/services"
@@ -21,6 +21,10 @@ import (
  *
  * this class will generate providers for dependency injection
  */
+func ProvideValidationService() services.ValidationService {
+	return servicesimpl.NewValidationService()
+}
+
 func ProvideUserRepository(db *gorm.DB) repositories.UserRepository {
 	return repositoriesimpl.NewUserRepository(db)
 }
@@ -29,16 +33,16 @@ func ProvideUserService(userRepository repositories.UserRepository) services.Use
 	return servicesimpl.NewUserService(userRepository)
 }
 
-func ProvideUserHandler(userService services.UserService) *handlers.UserHandler {
-	return handlers.NewUserHandler(userService)
+func ProvideUserHandler(userService services.UserService, validationService services.ValidationService) *handlers.UserHandler {
+	return handlers.NewUserHandler(userService, validationService)
 }
 
-func ProvideUserGrpcService(userRepository repositories.UserRepository) proto.UserServiceServer {
-	return grpcserviceimpl.NewUserServiceServer(userRepository)
+func ProvideUserGrpcService(userService services.UserService) proto.UserServiceServer {
+	return grpcserviceimpl.NewUserServiceServer(userService)
 }
 
 func InitUserHandler(db *gorm.DB) *handlers.UserHandler {
-	wire.Build(ProvideUserRepository, ProvideUserService, ProvideUserHandler)
+	wire.Build(ProvideUserRepository, ProvideUserService, ProvideUserHandler, ProvideValidationService)
 	return &handlers.UserHandler{}
 }
 
@@ -48,6 +52,6 @@ func InitUserService(db *gorm.DB) services.UserService {
 }
 
 func InitUserGrpcService(db *gorm.DB) proto.UserServiceServer {
-	wire.Build(ProvideUserRepository, ProvideUserGrpcService)
+	wire.Build(ProvideUserGrpcService, ProvideUserService, ProvideUserRepository)
 	return nil
 }

@@ -1,11 +1,8 @@
 package repositoriesimpl
 
 import (
-	"errors"
-
 	"github.com/mugnialby/go-microservices/user-service/models/entities"
 	"github.com/mugnialby/go-microservices/user-service/repositories"
-	"github.com/mugnialby/go-microservices/user-service/utils"
 	"gorm.io/gorm"
 )
 
@@ -19,44 +16,32 @@ func NewUserRepository(db *gorm.DB) repositories.UserRepository {
 	}
 }
 
-func (userRepository *userRepositoryImpl) FindAll() (users *[]entities.Users, err *error) {
+func (userRepository *userRepositoryImpl) FindAll() (users *[]entities.Users, err error) {
 	results := userRepository.db.Find(&users)
-	utils.ErrorHandler(results.Error)
-
-	return users, nil
+	return users, results.Error
 }
 
-func (userRepository *userRepositoryImpl) FindById(userId *uint64) (user *entities.Users, err *error) {
+func (userRepository *userRepositoryImpl) FindById(userId *uint64) (user *entities.Users, err error) {
 	result := userRepository.db.First(&user, userId)
-	utils.ErrorHandler(result.Error)
-
-	if result.RowsAffected == 0 {
-		errMessage := errors.New("User is not found")
-		return nil, &errMessage
-	}
-
-	return user, nil
+	return user, result.Error
 }
 
-func (userRepository *userRepositoryImpl) Add(user *entities.Users) (err *error) {
+func (userRepository *userRepositoryImpl) Add(user *entities.Users) (err error) {
 	result := userRepository.db.Create(&user)
-	utils.ErrorHandler(result.Error)
-
-	return nil
+	return result.Error
 }
 
-func (userRepository *userRepositoryImpl) Update(user *entities.Users) (err *error) {
+func (userRepository *userRepositoryImpl) Update(user *entities.Users) (err error) {
 	result := userRepository.db.Model(&user).Updates(user)
-	utils.ErrorHandler(result.Error)
-
-	return nil
+	return result.Error
 }
 
-func (userRepository *userRepositoryImpl) Delete(userId *uint64) (err *error) {
-	var user entities.Users
+func (userRepository *userRepositoryImpl) Delete(userId *uint64) (err error) {
+	result := userRepository.db.Delete(&entities.Users{}, userId)
+	return result.Error
+}
 
-	result := userRepository.db.Where("id = ?", userId).Delete(&user)
-	utils.ErrorHandler(result.Error)
-
-	return nil
+func (userRepository *userRepositoryImpl) FindByUsername(username string) (user *entities.Users, err error) {
+	result := userRepository.db.Where("username = ?", username).First(&user)
+	return user, result.Error
 }

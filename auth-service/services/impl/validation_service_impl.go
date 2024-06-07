@@ -1,12 +1,15 @@
 package servicesimpl
 
-import "github.com/go-playground/validator"
+import (
+	"github.com/go-playground/validator"
+	"github.com/mugnialby/go-microservices/auth-service/services"
+)
 
 type validationServiceImpl struct {
 	validate *validator.Validate
 }
 
-func NewValidationService() *validationServiceImpl {
+func NewValidationService() services.ValidationService {
 	return &validationServiceImpl{
 		validate: validator.New(),
 	}

@@ -4,23 +4,24 @@ import (
 	"log"
 	"net"
 
-	"github.com/mugnialby/go-microservices/user-service/proto/user"
+	"github.com/mugnialby/go-microservices/user-service/proto/users"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 )
 
 func StartGrpcServer(
-	userServiceServer user.UserServiceServer,
+	userServiceServer users.UserServiceServer,
 ) {
 	grpcServer := grpc.NewServer()
 
-	user.RegisterUserServiceServer(grpcServer, userServiceServer)
+	users.RegisterUserServiceServer(grpcServer, userServiceServer)
 
-	listener, err := net.Listen("tcp", ":50051")
+	listener, err := net.Listen("tcp", viper.GetString("services.users.port"))
 	if err != nil {
 		log.Fatalf("Failed to listen : %v", err)
 	}
 
-	log.Println("Starting gRPC server on port 50051")
+	log.Printf("Starting gRPC server on port %v", viper.GetString("services.users.port"))
 	if err := grpcServer.Serve(listener); err != nil {
 		log.Fatalf("Failed to serve : %v", err)
 	}

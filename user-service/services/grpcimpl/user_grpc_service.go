@@ -2,22 +2,37 @@ package grpcserviceimpl
 
 import (
 	"context"
+	"log"
 
-	proto "github.com/mugnialby/go-microservices/user-service/proto/user"
-	"github.com/mugnialby/go-microservices/user-service/repositories"
+	proto "github.com/mugnialby/go-microservices/user-service/proto/users"
+	"github.com/mugnialby/go-microservices/user-service/services"
 )
 
-type userServiceServer struct {
+type userGrpcService struct {
 	proto.UnimplementedUserServiceServer
-	userRepository repositories.UserRepository
+	userService services.UserService
 }
 
-func NewUserServiceServer(userRepository repositories.UserRepository) proto.UserServiceServer {
-	return &userServiceServer{
-		userRepository: userRepository,
+func NewUserServiceServer(userService services.UserService) proto.UserServiceServer {
+	return &userGrpcService{
+		userService: userService,
 	}
 }
 
-func (userServiceServer *userServiceServer) FindByUsername(context.Context, *proto.FindByUsernameRequest) (*proto.FindByUsernameResponse, error) {
-	return nil, nil
+func (userGrpcService *userGrpcService) FindByUsername(
+	context context.Context,
+	findByUsernameRequest *proto.FindByUsernameRequest,
+) (*proto.FindByUsernameResponse, error) {
+	user, err := userGrpcService.userService.FindByUsername(findByUsernameRequest.Username)
+	if err != nil {
+		log.Println(err.Error())
+		return &proto.FindByUsernameResponse{}, nil
+	}
+
+	findByUsernameResponse := proto.FindByUsernameResponse{
+		Email:    user.Email,
+		Password: user.Password,
+	}
+
+	return &findByUsernameResponse, err
 }

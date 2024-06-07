@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mugnialby/go-microservices/user-service/models/dto/requests"
+	"github.com/mugnialby/go-microservices/user-service/models/dto/responses"
 	"github.com/mugnialby/go-microservices/user-service/services"
 )
 
@@ -15,101 +18,152 @@ import (
  * Rest Controller (for handling requests)
  */
 type UserHandler struct {
-	userService services.UserService
+	userService       services.UserService
+	validationService services.ValidationService
 }
 
-func NewUserHandler(userService services.UserService) *UserHandler {
-	return &UserHandler{userService: userService}
+func NewUserHandler(userService services.UserService, validationService services.ValidationService) *UserHandler {
+	return &UserHandler{
+		userService:       userService,
+		validationService: validationService,
+	}
 }
 
 func (handler *UserHandler) UserFindAllHandler(context *gin.Context) {
-	users, _ := handler.userService.FindAll()
-	context.JSON(http.StatusOK, users)
+	users, err := handler.userService.FindAll()
+	if err != nil {
+		log.Println(err.Error())
+		context.JSON(http.StatusInternalServerError, responses.NewResponse("Fail", nil))
+		return
+	}
+
+	context.JSON(http.StatusOK, responses.NewResponse("OK", &users))
 }
 
 func (handler *UserHandler) UserFindByIdHandler(context *gin.Context) {
-	id, err := strconv.ParseUint(context.Param("id"), 0, 64)
+	userId, err := strconv.ParseUint(context.Param("id"), 0, 64)
 	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"error": "Bad Request"})
+		log.Printf("Parameter id : %v", &userId)
+		context.JSON(http.StatusBadRequest, responses.NewResponse("Bad Request", nil))
 		return
 	}
 
-	user, _ := handler.userService.FindById(&id)
+	user, err := handler.userService.FindById(&userId)
 	if err != nil {
 		if err.Error() == "record not found" {
-			context.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+			log.Printf("Parameter id: %v", &userId)
+			context.JSON(http.StatusNotFound, responses.NewResponse("Data not found", nil))
 		} else {
-			context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			log.Printf("Internal Server Error : %v", err)
+			context.JSON(http.StatusInternalServerError, responses.NewResponse(err.Error(), nil))
 		}
 
 		return
 	}
 
-	context.JSON(http.StatusOK, user)
+	context.JSON(http.StatusOK, responses.NewResponse("OK", &user))
 }
 
 func (handler *UserHandler) UserAddHandler(context *gin.Context) {
-	// var userAddRequest requests.UsersAddRequest
-	// err := context.BindJSON(&userAddRequest)
-	// if err != nil {
-	// 	context.JSON(http.StatusBadRequest, responses.re)
-	// }
-
-	// err := handler.userService.Add(&userAddRequest)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	context.JSON(http.StatusOK, "")
-}
-
-func (handler *UserHandler) UserUpdateHandler(context *gin.Context) {
-	// id, err := strconv.ParseUint(context.Param("id"), 0, 64)
-	// if err != nil {
-	// 	context.JSON(http.StatusBadRequest, gin.H{"error": "Bad Request"})
-	// 	return
-	// }
-
-	// var userUpdateRequest requests.UsersUpdateRequest
-	// utils.ErrorHandler(context.BindJSON(&userUpdateRequest))
-	// err := handler.userService.Update(&userUpdateRequest)
-	// if err != nil {
-	// 	if err.Error() == "record not found" {
-	// 		context.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
-	// 	} else {
-	// 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	// 	}
-
-	// 	return
-	// }
-
-	// context.JSON(http.StatusOK, user)
-	context.JSON(http.StatusOK, "")
-}
-
-func (handler *UserHandler) UserDeleteHandler(context *gin.Context) {
-	id, err := strconv.ParseUint(context.Param("id"), 0, 64)
+	var userAddRequest requests.UsersAddRequest
+	err := context.BindJSON(&userAddRequest)
 	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"error": "Bad Request"})
+		log.Println(err.Error())
+		context.JSON(http.StatusBadRequest, responses.NewResponse("Bad Request", nil))
 		return
 	}
 
-	user, _ := handler.userService.FindById(&id)
+	errorValidation := handler.validationService.Validate(&userAddRequest)
+	if errorValidation != nil {
+		log.Println(errorValidation.Error())
+		context.JSON(http.StatusBadRequest, responses.NewResponse("Bad Request", nil))
+		return
+	}
+
+	errorService := handler.userService.Add(&userAddRequest)
+	if errorService != nil {
+		log.Println(errorService.Error())
+		context.JSON(http.StatusInternalServerError, responses.NewResponse("Fail", nil))
+		return
+	}
+
+	context.JSON(http.StatusCreated, responses.NewResponse("OK", nil))
+}
+
+func (handler *UserHandler) UserUpdateHandler(context *gin.Context) {
+	userId, err := strconv.ParseUint(context.Param("id"), 0, 64)
 	if err != nil {
-		if err.Error() == "record not found" {
-			context.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		context.JSON(http.StatusBadRequest, responses.NewResponse("Bad Request", nil))
+		return
+	}
+
+	_, errorFindData := handler.userService.FindById(&userId)
+	if errorFindData != nil {
+		if errorFindData.Error() == "record not found" {
+			log.Printf("Parameter id: %v", &userId)
+			context.JSON(http.StatusNotFound, responses.NewResponse("Data not found", nil))
 		} else {
-			context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			log.Printf("Internal Server Error : %v", errorFindData)
+			context.JSON(http.StatusInternalServerError, responses.NewResponse(errorFindData.Error(), nil))
 		}
 
 		return
 	}
 
-	context.JSON(http.StatusOK, user)
+	var userUpdateRequest requests.UsersUpdateRequest
+	errorBindingJson := context.BindJSON(&userUpdateRequest)
+	if errorBindingJson != nil {
+		log.Printf("Parameter : %v", &userUpdateRequest)
+		context.JSON(http.StatusBadRequest, responses.NewResponse("Bad Request", nil))
+		return
+	}
+
+	errorValidation := handler.validationService.Validate(&userUpdateRequest)
+	if errorValidation != nil {
+		log.Println(errorValidation.Error())
+		context.JSON(http.StatusBadRequest, responses.NewResponse("Bad Request", nil))
+		return
+	}
+
+	errorUpdate := handler.userService.Update(&userId, &userUpdateRequest)
+	if errorUpdate != nil {
+		log.Printf("Parameter id: %v", &userId)
+		log.Printf("Error : %v", errorUpdate.Error())
+		context.JSON(http.StatusBadRequest, responses.NewResponse("Fail", nil))
+		return
+	}
+
+	context.JSON(http.StatusOK, responses.NewResponse("OK", nil))
 }
 
-func TestHandler(context *gin.Context) {
-	context.JSON(http.StatusOK, gin.H{
-		"message": "tes",
-	})
+func (handler *UserHandler) UserDeleteHandler(context *gin.Context) {
+	userId, err := strconv.ParseUint(context.Param("id"), 0, 64)
+	if err != nil {
+		log.Printf("Parameter id: %v", &userId)
+		context.JSON(http.StatusBadRequest, responses.NewResponse("Bad Request", nil))
+		return
+	}
+
+	_, errorFindData := handler.userService.FindById(&userId)
+	if errorFindData != nil {
+		if errorFindData.Error() == "record not found" {
+			log.Printf("Parameter id: %v", &userId)
+			context.JSON(http.StatusNotFound, responses.NewResponse("Data not found", nil))
+		} else {
+			log.Printf("Internal Server Error : %v", errorFindData)
+			context.JSON(http.StatusInternalServerError, responses.NewResponse(errorFindData.Error(), nil))
+		}
+
+		return
+	}
+
+	errorDeleteData := handler.userService.Delete(&userId)
+	if errorDeleteData != nil {
+		log.Printf("Parameter id: %v", &userId)
+		log.Printf("Error : %v", errorDeleteData.Error())
+		context.JSON(http.StatusBadRequest, responses.NewResponse("Fail", nil))
+		return
+	}
+
+	context.JSON(http.StatusOK, responses.NewResponse("OK", nil))
 }

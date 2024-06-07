@@ -15,12 +15,12 @@ type Users struct {
 	Username   string `gorm:"unique"`
 	Password   string
 	FirstName  string
-	LastName   *string
-	Email      *string `gorm:"unique"`
+	LastName   string
+	Email      string `gorm:"unique"`
 	ManagerId  uint64
-	Status     *string
+	Status     string
 	CreatedBy  string
 	CreatedAt  time.Time
-	ModifiedBy *string
-	ModifiedAt *time.Time
+	ModifiedBy string
+	ModifiedAt time.Time
 }

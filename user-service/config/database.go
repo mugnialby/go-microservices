@@ -20,12 +20,12 @@ import (
 func InitDbConnection() *gorm.DB {
 	var dbConnection strings.Builder
 	fmt.Fprintf(&dbConnection, "host=%s", viper.GetString("database.host"))
-	fmt.Fprintf(&dbConnection, "user=%s", viper.GetString("database.user"))
-	fmt.Fprintf(&dbConnection, "password=%s", viper.GetString("database.password"))
-	fmt.Fprintf(&dbConnection, "dbname=%s", viper.GetString("database.dbname"))
-	fmt.Fprintf(&dbConnection, "port=%s", viper.GetString("database.port"))
-	fmt.Fprintf(&dbConnection, "sslmode=%s", viper.GetString("database.sslmode"))
-	fmt.Fprintf(&dbConnection, "TimeZone=%s", viper.GetString("database.TimeZone"))
+	fmt.Fprintf(&dbConnection, " user=%s", viper.GetString("database.user"))
+	fmt.Fprintf(&dbConnection, " password=%s", viper.GetString("database.password"))
+	fmt.Fprintf(&dbConnection, " dbname=%s", viper.GetString("database.dbname"))
+	fmt.Fprintf(&dbConnection, " port=%s", viper.GetString("database.port"))
+	fmt.Fprintf(&dbConnection, " sslmode=%s", viper.GetString("database.sslmode"))
+	fmt.Fprintf(&dbConnection, " TimeZone=%s", viper.GetString("database.TimeZone"))
 
 	db, err := gorm.Open(postgres.Open(dbConnection.String()), &gorm.Config{})
 	utils.ErrorHandler(err)

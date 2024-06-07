@@ -8,7 +8,7 @@ package main
 
 import (
 	"github.com/mugnialby/go-microservices/user-service/handlers"
-	"github.com/mugnialby/go-microservices/user-service/proto/user"
+	"github.com/mugnialby/go-microservices/user-service/proto/users"
 	"github.com/mugnialby/go-microservices/user-service/repositories"
 	"github.com/mugnialby/go-microservices/user-service/repositories/impl"
 	"github.com/mugnialby/go-microservices/user-service/services"
@@ -22,7 +22,8 @@ import (
 func InitUserHandler(db *gorm.DB) *handlers.UserHandler {
 	userRepository := ProvideUserRepository(db)
 	userService := ProvideUserService(userRepository)
-	userHandler := ProvideUserHandler(userService)
+	validationService := ProvideValidationService()
+	userHandler := ProvideUserHandler(userService, validationService)
 	return userHandler
 }
 
@@ -32,9 +33,10 @@ func InitUserService(db *gorm.DB) services.UserService {
 	return userService
 }
 
-func InitUserGrpcService(db *gorm.DB) user.UserServiceServer {
+func InitUserGrpcService(db *gorm.DB) users.UserServiceServer {
 	userRepository := ProvideUserRepository(db)
-	userServiceServer := ProvideUserGrpcService(userRepository)
+	userService := ProvideUserService(userRepository)
+	userServiceServer := ProvideUserGrpcService(userService)
 	return userServiceServer
 }
 
@@ -46,6 +48,10 @@ func InitUserGrpcService(db *gorm.DB) user.UserServiceServer {
  *
  * this class will generate providers for dependency injection
  */
+func ProvideValidationService() services.ValidationService {
+	return servicesimpl.NewValidationService()
+}
+
 func ProvideUserRepository(db *gorm.DB) repositories.UserRepository {
 	return repositoriesimpl.NewUserRepository(db)
 }
@@ -54,10 +60,10 @@ func ProvideUserService(userRepository repositories.UserRepository) services.Use
 	return servicesimpl.NewUserService(userRepository)
 }
 
-func ProvideUserHandler(userService services.UserService) *handlers.UserHandler {
-	return handlers.NewUserHandler(userService)
+func ProvideUserHandler(userService services.UserService, validationService services.ValidationService) *handlers.UserHandler {
+	return handlers.NewUserHandler(userService, validationService)
 }
 
-func ProvideUserGrpcService(userRepository repositories.UserRepository) user.UserServiceServer {
-	return grpcserviceimpl.NewUserServiceServer(userRepository)
+func ProvideUserGrpcService(userService services.UserService) users.UserServiceServer {
+	return grpcserviceimpl.NewUserServiceServer(userService)
 }
