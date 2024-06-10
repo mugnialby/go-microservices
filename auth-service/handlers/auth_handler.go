@@ -12,24 +12,24 @@ import (
 )
 
 type AuthHandler struct {
-	authService           services.AuthService
 	validationService     services.ValidationService
 	userClientGrpcService proto.UserServiceClient
+	jwtService            services.JwtService
 }
 
 func NewAuthHandler(
-	authService services.AuthService,
 	validationService services.ValidationService,
 	userClientGrpcService proto.UserServiceClient,
+	jwtService services.JwtService,
 ) *AuthHandler {
 	return &AuthHandler{
-		authService:           authService,
 		validationService:     validationService,
 		userClientGrpcService: userClientGrpcService,
+		jwtService:            jwtService,
 	}
 }
 
-func (handler *AuthHandler) LoginHandler(context *gin.Context) {
+func (handler *AuthHandler) GenerateTokenHandler(context *gin.Context) {
 	var loginRequest requests.LoginRequest
 	if err := context.ShouldBindJSON(&loginRequest); err != nil {
 		log.Println(&loginRequest)
@@ -57,12 +57,12 @@ func (handler *AuthHandler) LoginHandler(context *gin.Context) {
 		return
 	}
 
-	// token, err := middleware.GenerateJWT(*user.Email)
-	// if err != nil {
-	// 	context.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
-	// 	return
-	// }
+	token, err := handler.jwtService.GenerateJWT(&user.Email)
+	if err != nil {
+		log.Println(err.Error())
+		context.JSON(http.StatusInternalServerError, responses.NewResponse("Fail", nil))
+		return
+	}
 
-	// context.JSON(http.StatusOK, gin.H{"token": token})
-	context.JSON(http.StatusOK, responses.NewResponse("token", nil))
+	context.JSON(http.StatusOK, responses.NewResponse("OK", token))
 }

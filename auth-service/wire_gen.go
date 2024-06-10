@@ -17,10 +17,10 @@ import (
 // Injectors from wire.go:
 
 func InitAuthHandler() *handlers.AuthHandler {
-	authService := ProvideAuthService()
 	validationService := ProvideValidationService()
 	userServiceClient := ProvideUserGrpcConnection()
-	authHandler := ProvideAuthHandler(authService, validationService, userServiceClient)
+	jwtService := ProvideJwtService()
+	authHandler := ProvideAuthHandler(validationService, userServiceClient, jwtService)
 	return authHandler
 }
 
@@ -32,8 +32,8 @@ func InitAuthHandler() *handlers.AuthHandler {
  *
  * this class will generate providers for dependency injection
  */
-func ProvideAuthService() services.AuthService {
-	return servicesimpl.NewAuthService()
+func ProvideJwtService() services.JwtService {
+	return servicesimpl.NewJwtService()
 }
 
 func ProvideValidationService() services.ValidationService {
@@ -45,9 +45,9 @@ func ProvideUserGrpcConnection() users.UserServiceClient {
 }
 
 func ProvideAuthHandler(
-	authService services.AuthService,
 	validationService services.ValidationService,
 	userServiceClient users.UserServiceClient,
+	jwtService services.JwtService,
 ) *handlers.AuthHandler {
-	return handlers.NewAuthHandler(authService, validationService, userServiceClient)
+	return handlers.NewAuthHandler(validationService, userServiceClient, jwtService)
 }

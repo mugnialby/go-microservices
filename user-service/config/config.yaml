@@ -1,5 +1,6 @@
 auth:
-  key: "TES"
+  jwt:
+    secret: "nicetry"
 server:
   port: ":8661"
 services:

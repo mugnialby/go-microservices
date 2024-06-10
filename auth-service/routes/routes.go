@@ -9,5 +9,5 @@ func InitAuthRoutes(
 	router *gin.Engine,
 	authHandler *handlers.AuthHandler,
 ) {
-	router.POST("auth/login", authHandler.LoginHandler)
+	router.POST("auth/", authHandler.GenerateTokenHandler)
 }

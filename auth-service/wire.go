@@ -18,8 +18,8 @@ import (
  *
  * this class will generate providers for dependency injection
  */
-func ProvideAuthService() services.AuthService {
-	return servicesimpl.NewAuthService()
+func ProvideJwtService() services.JwtService {
+	return servicesimpl.NewJwtService()
 }
 
 func ProvideValidationService() services.ValidationService {
@@ -31,14 +31,14 @@ func ProvideUserGrpcConnection() proto.UserServiceClient {
 }
 
 func ProvideAuthHandler(
-	authService services.AuthService,
 	validationService services.ValidationService,
 	userServiceClient proto.UserServiceClient,
+	jwtService services.JwtService,
 ) *handlers.AuthHandler {
-	return handlers.NewAuthHandler(authService, validationService, userServiceClient)
+	return handlers.NewAuthHandler(validationService, userServiceClient, jwtService)
 }
 
 func InitAuthHandler() *handlers.AuthHandler {
-	wire.Build(ProvideAuthService, ProvideAuthHandler, ProvideValidationService, ProvideUserGrpcConnection)
+	wire.Build(ProvideAuthHandler, ProvideValidationService, ProvideUserGrpcConnection, ProvideJwtService)
 	return &handlers.AuthHandler{}
 }

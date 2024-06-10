@@ -3,10 +3,10 @@ package middleware
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
+	"github.com/mugnialby/go-microservices/user-service/models/dto/responses"
 	"github.com/spf13/viper"
 )
 
@@ -14,7 +14,7 @@ func JWTAuth() gin.HandlerFunc {
 	return func(context *gin.Context) {
 		headerToken := context.GetHeader("Authorization")
 		if headerToken == "" {
-			context.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization token is required"})
+			context.JSON(http.StatusUnauthorized, responses.NewResponse("Unauthorized", nil))
 			context.Abort()
 			return
 		}
@@ -27,20 +27,11 @@ func JWTAuth() gin.HandlerFunc {
 		})
 
 		if err != nil || !token.Valid {
-			context.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
+			context.JSON(http.StatusUnauthorized, responses.NewResponse("Unauthorized", nil))
 			context.Abort()
 			return
 		}
 
 		context.Next()
 	}
-}
-
-func GenerateJWT(email string) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"email": email,
-		"exp":   time.Now().Add(time.Hour * 1).Unix(),
-	})
-
-	return token.SignedString([]byte(viper.GetString("auth.jwt.secret")))
 }
