@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/mugnialby/go-microservices/user-service/utils"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -28,7 +28,9 @@ func InitDbConnection() *gorm.DB {
 	fmt.Fprintf(&dbConnection, " TimeZone=%s", viper.GetString("database.TimeZone"))
 
 	db, err := gorm.Open(postgres.Open(dbConnection.String()), &gorm.Config{})
-	utils.ErrorHandler(err)
+	if err != nil {
+		logrus.Fatalln("FAILED TO CONNECT TO DATABASE")
+	}
 
 	return db
 }

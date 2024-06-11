@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -9,6 +8,7 @@ import (
 	"github.com/mugnialby/go-microservices/auth-service/models/dto/responses"
 	proto "github.com/mugnialby/go-microservices/auth-service/proto/users"
 	"github.com/mugnialby/go-microservices/auth-service/services"
+	"github.com/sirupsen/logrus"
 )
 
 type AuthHandler struct {
@@ -32,14 +32,14 @@ func NewAuthHandler(
 func (handler *AuthHandler) GenerateTokenHandler(context *gin.Context) {
 	var loginRequest requests.LoginRequest
 	if err := context.ShouldBindJSON(&loginRequest); err != nil {
-		log.Println(&loginRequest)
+		logrus.Errorln(err.Error())
 		context.JSON(http.StatusBadRequest, responses.NewResponse("Bad Request", nil))
 		return
 	}
 
 	errorValidation := handler.validationService.Validate(&loginRequest)
 	if errorValidation != nil {
-		log.Println(errorValidation.Error())
+		logrus.Errorln(errorValidation.Error())
 		context.JSON(http.StatusBadRequest, responses.NewResponse("Bad Request", nil))
 		return
 	}
@@ -47,7 +47,7 @@ func (handler *AuthHandler) GenerateTokenHandler(context *gin.Context) {
 	findByUsernameRequest := proto.FindByUsernameRequest{Username: loginRequest.Username}
 	user, err := handler.userClientGrpcService.FindByUsername(context, &findByUsernameRequest)
 	if err != nil {
-		log.Println(err.Error())
+		logrus.Errorln(err.Error())
 		context.JSON(http.StatusUnauthorized, responses.NewResponse("Bad Credential", nil))
 		return
 	}
@@ -59,7 +59,7 @@ func (handler *AuthHandler) GenerateTokenHandler(context *gin.Context) {
 
 	token, err := handler.jwtService.GenerateJWT(&user.Email)
 	if err != nil {
-		log.Println(err.Error())
+		logrus.Warn(err.Error())
 		context.JSON(http.StatusInternalServerError, responses.NewResponse("Fail", nil))
 		return
 	}

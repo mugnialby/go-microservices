@@ -1,8 +1,10 @@
 package config
 
 import (
+	"os"
+
 	"github.com/gin-gonic/gin"
-	"github.com/mugnialby/go-microservices/user-service/utils"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -14,12 +16,17 @@ import (
  * will set mode for gin
  */
 func InitConfig() {
+	workingDirectory, err := os.Getwd()
+	if err != nil {
+		logrus.Fatalln(err.Error())
+	}
+
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath("config/")
+	viper.AddConfigPath(workingDirectory)
 
 	if err := viper.ReadInConfig(); err != nil {
-		utils.ErrorHandler(err)
+		logrus.Fatalln(err.Error())
 	}
 
 	gin.SetMode(viper.GetString("apps.mode"))
