@@ -16,13 +16,3 @@ func TestGenerateTokenSuccess(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, token)
 }
-
-func TestGenerateTokenEmptyEmail(t *testing.T) {
-	jwtService := servicesimpl.NewJwtService()
-
-	var email string
-
-	token, err := jwtService.GenerateJWT(&email)
-	assert.Error(t, err)
-	assert.Nil(t, token)
-}

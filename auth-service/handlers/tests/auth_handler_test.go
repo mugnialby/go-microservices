@@ -3,6 +3,7 @@ package handlerstest
 import (
 	"testing"
 
+	servicesimpl "github.com/mugnialby/go-microservices/auth-service/services/impl"
 	"github.com/stretchr/testify/assert"
 )
 
