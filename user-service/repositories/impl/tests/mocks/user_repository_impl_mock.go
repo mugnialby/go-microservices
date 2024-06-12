@@ -13,8 +13,28 @@ type UserRepositoryMock struct {
 }
 
 func (userRepositoryMock *UserRepositoryMock) FindAll() (users *[]entities.Users, err error) {
+	arguments := userRepositoryMock.Mock.Called()
+
+	if arguments.Get(0) == nil {
+		return nil, errors.New("DATA NOT FOUND")
+	}
+
 	var results []entities.Users
-	result := entities.Users{}
+
+	result := entities.Users{
+		ID:         1,
+		Username:   "ALBYM",
+		Password:   "12345678",
+		FirstName:  "ALBY",
+		LastName:   "MUGNI",
+		Email:      "ALBY@TES.COM",
+		ManagerId:  2,
+		Status:     "Y",
+		CreatedBy:  "ALBYM",
+		CreatedAt:  time.Now(),
+		ModifiedBy: "",
+		ModifiedAt: time.Time{},
+	}
 
 	results = append(results, result)
 
@@ -22,12 +42,14 @@ func (userRepositoryMock *UserRepositoryMock) FindAll() (users *[]entities.Users
 }
 
 func (userRepositoryMock *UserRepositoryMock) FindById(userId *uint64) (user *entities.Users, err error) {
-	if userId == nil {
-		return nil, errors.New("NO DATA FOUND")
+	arguments := userRepositoryMock.Mock.Called(userId)
+
+	if arguments.Get(0) == nil {
+		return nil, errors.New("DATA NOT FOUND")
 	}
 
 	result := entities.Users{
-		ID:         1,
+		ID:         *userId,
 		Username:   "ALBYM",
 		Password:   "12345678",
 		FirstName:  "ALBY",
@@ -49,32 +71,36 @@ func (userRepositoryMock *UserRepositoryMock) Add(user *entities.Users) (err err
 
 	if arguments.Get(0) == nil {
 		return errors.New("PARAMETERS IS NULL")
-	} else {
-		return nil
 	}
+
+	return nil
 }
 
 func (userRepositoryMock *UserRepositoryMock) Update(user *entities.Users) (err error) {
 	arguments := userRepositoryMock.Mock.Called(user)
 
 	if arguments.Get(0) == nil {
-		return errors.New("PARAMETERS IS NULL")
+		return errors.New("DATA NOT FOUND")
 	} else {
 		return nil
 	}
 }
 
 func (userRepositoryMock *UserRepositoryMock) Delete(userId *uint64) (err error) {
-	if userId == nil {
-		return errors.New("NO DATA FOUND")
+	arguments := userRepositoryMock.Mock.Called(userId)
+
+	if arguments.Get(0) == nil {
+		return errors.New("DATA NOT FOUND")
 	}
 
 	return nil
 }
 
 func (userRepositoryMock *UserRepositoryMock) FindByUsername(username string) (user *entities.Users, err error) {
-	if username == "" {
-		return nil, errors.New("NO DATA FOUND")
+	arguments := userRepositoryMock.Mock.Called(username)
+
+	if arguments.Get(0) == nil {
+		return nil, errors.New("DATA NOT FOUND")
 	}
 
 	result := entities.Users{
